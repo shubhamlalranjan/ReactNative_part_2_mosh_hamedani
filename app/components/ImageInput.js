@@ -1,39 +1,61 @@
-import React from "react";
-import { StyleSheet, TouchableOpacity } from "react-native";
+import React, { useEffect } from "react";
+import {
+  StyleSheet,
+  View,
+  Image,
+  TouchableWithoutFeedback,
+  Alert,
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import defaultStyle from "../config/styles";
-import Icon from "./Icon";
 
-import * as ImagePicker from "expo-image-picker";
+function ImageInput({ imageUri, onChangeImage }) {
+  useEffect(() => {
+    requestPermission();
+  }, []);
 
-function ImageInput({ style, onPress, ...other }) {
-  const selectImage = async () => {
-    try {
-      //   const { granted } = await ImagePicker.getMediaLibraryPermissionsAsync();
-      //   if (granted) {
-      const result = await ImagePicker.launchImageLibraryAsync();
-      if (!result.cancelled) {
-        console.log(result.uri);
-        onPress(result.uri);
-      }
-      //   } else {
-      //     alert(
-      //       "Libary Permission Required! \n Please Give the libary permission "
-      //     );
-      //   }
-    } catch (error) {
-      console.log("error", error.message);
-      console.log(error);
+  const requestPermission = async () => {
+    const { granted } = await ImagePicker.getCameraPermissionsAsync();
+    if (!granted) {
+      alert("You need to enable the permission to access Images");
     }
   };
+
+  const selectImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.5,
+      });
+      if (!result.cancelled) {
+        onChangeImage(result.uri);
+      }
+    } catch (error) {}
+  };
+  const handlePress = async () => {
+    if (!imageUri) selectImage();
+    else
+      Alert.alert("Delete", "Are you Shure want to Delete the image!", [
+        { text: "Yes", onPress: () => onChangeImage(null) },
+        { text: "No" },
+      ]);
+  };
   return (
-    <TouchableOpacity
-      {...other}
-      style={[styles.container, style]}
-      onPress={selectImage}
-    >
-      <Icon name="camera" backgroundColor={defaultStyle.colors.dark} />
-    </TouchableOpacity>
+    <TouchableWithoutFeedback onPress={handlePress}>
+      <View style={[styles.container]} onPress={selectImage}>
+        {!imageUri ? (
+          <MaterialCommunityIcons
+            name="camera"
+            backgroundColor={defaultStyle.colors.medium}
+            size={40}
+          />
+        ) : (
+          <Image source={{ uri: imageUri }} style={styles.image} />
+        )}
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -41,11 +63,16 @@ const styles = StyleSheet.create({
   container: {
     width: 100,
     height: 100,
-    borderRadius: 10,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 10,
-    backgroundColor: defaultStyle.colors.medium,
+    backgroundColor: defaultStyle.colors.light,
+    overflow: "hidden",
+  },
+  image: {
+    borderRadius: 15,
+    height: "100%",
+    width: "100%",
   },
 });
 
